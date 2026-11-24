@@ -4,6 +4,8 @@ go 1.25.0
 
 toolchain go1.26.10
 
+replace github.com/1password/onepassword-sdk-go => github.com/addshore/onepassword-sdk-go v0.0.0-20261124105847-e9ab6f729094
+
 require (
 	github.com/1Password/connect-sdk-go v1.5.3
 	github.com/1password/onepassword-sdk-go v0.4.1-beta.1
