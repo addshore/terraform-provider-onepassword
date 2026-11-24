@@ -1,0 +1,40 @@
+name: WSL desktop authentication artifacts
+
+on:
+  push:
+    branches: [wsl-desktop-auth]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version-file: go.mod
+
+      - name: Build Linux provider and Windows helper
+        run: |
+          mkdir -p dist
+          CGO_ENABLED=1 go build -mod=readonly -trimpath -o dist/terraform-provider-onepassword .
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 go build -mod=readonly -trimpath \
+            -o dist/wsl-desktop-helper.exe github.com/1password/onepassword-sdk-go/cmd/wsl-desktop-helper
+          (cd dist && sha256sum terraform-provider-onepassword wsl-desktop-helper.exe > SHA256SUMS)
+          tar -C dist -czf wsl-desktop-auth-amd64.tar.gz .
+
+      - name: Upload test bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wsl-desktop-auth-${{ github.sha }}
+          path: wsl-desktop-auth-amd64.tar.gz
+          if-no-files-found: error
+          retention-days: 14
